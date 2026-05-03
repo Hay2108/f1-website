@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useRef } from "react";
-import Navbar from "../../../components/navbar";
+
 import { DecodeText, FloatinByText } from "../../../hook/text-anim";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -41,9 +41,7 @@ export default function Home() {
         ref={textRef}
         className=" font-akira h-screen z-5 flex flex-col items-center justify-center bg-white text-black"
       >
-        <div className="text-5xl floatin flex items-center justify-center flex-col">
-          <Navbar />
-        </div>
+
         <h1 className="text-5xl decode p-1">Hello World</h1>
       </section>
     </>
