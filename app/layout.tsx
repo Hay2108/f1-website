@@ -1,20 +1,15 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Geist, Geist_Mono, Orbitron, Inter } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { Orbitron, Inter } from "next/font/google";
 import localFont from "next/font/local";
 import Navbar from "../components/navbar";
 import TransitionFunc from "../transition/transition";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = GeistSans;
+const geistMono = GeistMono;
 
 const orbitron = Orbitron({
   variable: "--font-orbitron",
@@ -44,8 +39,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${AkiraExpanded.variable} ${orbitron.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col overflow-y-scroll no-scrollbar">
+      <body suppressHydrationWarning className="min-h-full flex flex-col overflow-y-scroll no-scrollbar">
         <Navbar />
         <TransitionFunc>{children}</TransitionFunc>
       </body>

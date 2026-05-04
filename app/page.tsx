@@ -8,6 +8,9 @@ import Championships from "../components/Championships";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
+const ENABLE_SLOT_MACHINE = false; // Đổi thành true để bật hiệu ứng slot machine
+
+
 const teams = [
   { name: "Mercedes", desc: "Mũi tên bạc. Thống trị kỷ nguyên hybrid với sự theo đuổi sự hoàn hảo không ngừng nghỉ.", bg: "/img/1.png", route: "/teams/mercedes", logo: "/logos/mercedes.svg", glowColor: "rgba(0, 210, 190, 0.6)" },
   { name: "Red Bull", desc: "Chắp cánh cho bạn. Khí động học chưa từng có và phả hệ vô địch.", bg: "/img/2.png", route: "/teams/redbull", logo: "/logos/redbull.svg", glowColor: "rgba(6, 0, 239, 0.5)" },
@@ -112,7 +115,7 @@ export default function Home() {
   const [startSlotMachine, setStartSlotMachine] = useState(false);
   const [hoverIndex, setHoverIndex] = useState(-1);
   const [currentTeamIndices, setCurrentTeamIndices] = useState<number[]>(
-    teams.map((_, i) => (i * 3 + 7) % teams.length)
+    teams.map((_, i) => ENABLE_SLOT_MACHINE ? (i * 3 + 7) % teams.length : i)
   );
 
   const hasStartedSlotMachine = useRef(false);
@@ -164,6 +167,8 @@ export default function Home() {
   useEffect(() => {
     if (!startSlotMachine || hasStartedSlotMachine.current) return;
     hasStartedSlotMachine.current = true;
+
+    if (!ENABLE_SLOT_MACHINE) return;
 
     const animatingRef = { current: teams.map(() => true) };
     
@@ -252,10 +257,10 @@ export default function Home() {
             key={`line-${i}`}
             className={`speed-line absolute h-[1px] md:h-[2px] rounded-full ${i % 3 === 0 ? 'bg-gradient-to-r from-transparent via-[#e10600] to-transparent' : 'bg-gradient-to-r from-transparent via-white to-transparent'}`}
             style={{
-              top: `${Math.random() * 100}%`,
+              top: `${(i * 37) % 100}%`,
               left: '-20%',
-              width: `${Math.random() * 40 + 10}%`,
-              opacity: Math.random() * 0.4 + 0.1,
+              width: `${(i * 19) % 40 + 10}%`,
+              opacity: ((i * 13) % 40) / 100 + 0.1,
             }}
           />
         ))}
