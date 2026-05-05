@@ -11,92 +11,129 @@ const AnimatedTrack = ({ track }: { track: any }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>('');
 
-  // Fetch SVG content
   useEffect(() => {
+    let isMounted = true;
     if (track?.image) {
-      setSvgContent(''); // Reset on track change to prevent old SVG flash
+      console.log('[AnimatedTrack] 1. Fetching SVG:', track.image);
+      setSvgContent('');
       fetch(track.image)
-        .then(r => r.text())
-        .then(setSvgContent)
+        .then((r) => r.text())
+        .then((content) => {
+          if (isMounted) {
+            console.log('[AnimatedTrack] 2. SVG Injected');
+            setSvgContent(content);
+          }
+        })
         .catch(console.error);
     }
+    return () => {
+      isMounted = false;
+    };
   }, [track?.image]);
 
   useEffect(() => {
-    if (!svgContent || !containerRef.current) return;
+  if (!svgContent || !containerRef.current) return;
 
-    let ctx: gsap.Context;
+   let ctx: gsap.Context;
 
-    // Use a delay to ensure React has fully committed the dangerouslySetInnerHTML
-    // and the browser has calculated the SVG layout for accurate getTotalLength()
-    const timer = setTimeout(() => {
+   const init = () => {
+    if (!containerRef.current) return;
+
+    const svg = containerRef.current.querySelector('svg');
+    if (!svg) {
+      requestAnimationFrame(init);
+      return;
+    }
+
+    // WAIT thêm 1 frame để chắc chắn layout xong
+    requestAnimationFrame(() => {
       ctx = gsap.context(() => {
-        const svg = containerRef.current?.querySelector('svg');
-        if (!svg) return;
-
-        // Ensure responsive scaling by setting viewBox and removing fixed dimensions
+        // FIX VIEWBOX
         if (!svg.getAttribute('viewBox')) {
-          const w = svg.getAttribute('width') || 500;
-          const h = svg.getAttribute('height') || 500;
+          const w = svg.getAttribute('width') || '500';
+          const h = svg.getAttribute('height') || '500';
           svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
         }
         svg.removeAttribute('width');
         svg.removeAttribute('height');
 
-        // 1. Initial State for SVG Container (Perspective & Rotation)
-        // Set explicitly AFTER layout is ready to prevent incorrect scaling
+        // FORCE layout
+        svg.getBoundingClientRect();
+
+        // INITIAL STATE (QUAN TRỌNG)
         gsap.set(svg, {
           transformPerspective: 1000,
           rotationX: 60,
-          rotationY: -15, // slight initial tilt
-          transformOrigin: "center center",
-          scale: 1,
+          rotationY: -15,
+          transformOrigin: "50% 50%",
+          willChange: "transform"
         });
 
-        // 2. Continuous 3D Rotation Animation
-        gsap.to(svg, {
+        // ROTATION
+        const rotation = gsap.to(svg, {
           rotationY: "+=360",
           duration: 25,
           ease: "none",
           repeat: -1,
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 80%", // Adjusted to trigger when component is comfortably in view
-            toggleActions: "play pause resume pause", // Pause when out of view
-          }
+          paused: true
         });
 
-        // 3. Draw-Line Effect (Racing Line)
+        // PATH ANIMATION
         const paths = svg.querySelectorAll('path, polyline, polygon, line');
-        paths.forEach((p) => {
-          const length = (p as any).getTotalLength ? (p as any).getTotalLength() : 4000;
-          
+        const anims: gsap.core.Tween[] = [];
+
+        paths.forEach((p: any) => {
+          // Normalize path length to 100 to fix vector-effect bug
+          p.setAttribute('pathLength', '100');
+
           gsap.set(p, {
-            strokeDasharray: length,
-            strokeDashoffset: length,
+            strokeDasharray: 100,
+            strokeDashoffset: 100
           });
 
-          gsap.to(p, {
-            strokeDashoffset: 0,
-            duration: 2.5,
-            ease: "power2.inOut",
-            delay: 0.2,
-            scrollTrigger: {
-              trigger: containerRef.current,
-              start: "top 80%",
+          anims.push(
+            gsap.to(p, {
+              strokeDashoffset: 0,
+              duration: 2.5,
+              ease: "power2.inOut",
+              paused: true
+            })
+          );
+        });
+
+        // 👉 SỬ DỤNG INTERSECTION OBSERVER
+        // ScrollTrigger bị lỗi tính toán sai vị trí khi element nằm trong container có position: sticky
+        // IntersectionObserver là giải pháp chuẩn xác nhất để biết element sticky có đang hiển thị hay không
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              rotation.play();
+              anims.forEach(a => a.play());
+            } else {
+              rotation.pause();
+              anims.forEach(a => a.pause());
             }
           });
-        });
+        }, { threshold: 0.1 });
 
-        // Force ScrollTrigger to recalculate in case the late injection shifted layout
-        ScrollTrigger.refresh();
+        if (containerRef.current) {
+          observer.observe(containerRef.current);
+        }
+
+        // Cleanup observer khi component unmount
+        return () => {
+          observer.disconnect();
+        };
+
       }, containerRef);
-    }, 50); // 50ms delay ensures layout stability
+    });
+   };
 
-    return () => {
-      clearTimeout(timer);
-      if (ctx) ctx.revert();
-    };
+  init();
+
+  return () => {
+    if (ctx) ctx.revert();
+  };
   }, [svgContent]);
 
   if (!track?.image) return null;
@@ -109,6 +146,7 @@ const AnimatedTrack = ({ track }: { track: any }) => {
     />
   );
 };
+
 
 const tracksData = [
   { id: 'australia', name: 'AUSTRALIA GP', flag: 'au', subtitle: 'F1 2020', circuit: 'Melbourne Grand Prix Circuit', location: 'Melbourne', image: '/TracksList/Australia/melbourne-2.svg' },
@@ -247,7 +285,7 @@ export default function Tracks() {
           stroke-linecap: round !important;
           stroke-linejoin: round !important;
           filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4));
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: stroke 0.4s cubic-bezier(0.4, 0, 0.2, 1), stroke-width 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         /* Hover Effect (Glow & Red Accent) */
