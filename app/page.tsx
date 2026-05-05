@@ -8,7 +8,7 @@ import Championships from "../components/Championships";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-const ENABLE_SLOT_MACHINE = false; // Đổi thành true để bật hiệu ứng slot machine
+const ENABLE_SLOT_MACHINE = true; // Đổi thành true để bật hiệu ứng slot machine
 
 
 const teams = [
@@ -24,113 +24,19 @@ const teams = [
   { name: "Williams", desc: "Di sản đua xe Anh gặp gỡ phong cách lái xe Mỹ. Tốc độ, sự đổi mới và tinh thần thể thao thuần túy.", bg: "/img/10.png", route: "/teams/williams", logo: "/logos/williams.svg", glowColor: "rgba(0, 160, 222, 0.6)" },
 ];
 
-const LoadingScreen = ({ onStartSlotMachine, onComplete }: { onStartSlotMachine: () => void, onComplete: () => void }) => {
-  const [phase, setPhase] = useState<'loading' | 'welcome' | 'splitting'>('loading');
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    let timeouts: NodeJS.Timeout[] = [];
-
-    if (phase === 'loading') {
-      let curr = 0;
-      interval = setInterval(() => {
-        curr += Math.random() * 20;
-        if (curr >= 100) {
-          curr = 100;
-          clearInterval(interval);
-          setProgress(100);
-          timeouts.push(setTimeout(() => setPhase('welcome'), 400));
-        } else {
-          setProgress(curr);
-        }
-      }, 150);
-    } else if (phase === 'welcome') {
-      timeouts.push(setTimeout(() => {
-        setPhase('splitting');
-        onStartSlotMachine();
-        sessionStorage.setItem('f1_hasLoadedBefore', 'true');
-      }, 1500));
-    } else if (phase === 'splitting') {
-      timeouts.push(setTimeout(() => {
-        onComplete();
-      }, 1500));
-    }
-
-    return () => {
-      clearInterval(interval);
-      timeouts.forEach(clearTimeout);
-    };
-  }, [phase, onStartSlotMachine, onComplete]);
-
-  return (
-    <div className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center overflow-hidden">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <div
-          key={i}
-          className="absolute h-full bg-[#0a0a0c] border-r border-white/5"
-          style={{
-            width: '10%',
-            left: `${i * 10}%`,
-            top: 0,
-            transform: phase === 'splitting' ? `translateY(${i % 2 === 0 ? '-100%' : '100%'})` : 'translateY(0)',
-            transition: 'transform 1s cubic-bezier(0.7, 0, 0.3, 1)',
-            transitionDelay: `${i * 0.05}s`,
-          }}
-        />
-      ))}
-      <div 
-        className="relative z-10 flex flex-col items-center justify-center w-full max-w-md px-6"
-        style={{ opacity: phase === 'splitting' ? 0 : 1, transition: 'opacity 0.5s ease' }}
-      >
-        {phase === 'loading' && (
-          <div className="w-full flex flex-col items-center">
-            <div className="w-full h-[3px] bg-white/10 rounded-full overflow-hidden mb-5">
-              <div 
-                className="h-full bg-[#e10600] rounded-full transition-all duration-200 ease-out shadow-[0_0_15px_#e10600]"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <div className="font-orbitron text-white/50 text-[0.8rem] font-bold tracking-[4px] uppercase animate-pulse">
-              INITIALIZING {Math.floor(progress)}%
-            </div>
-          </div>
-        )}
-        {phase === 'welcome' && (
-          <h1 className="font-orbitron font-black text-[4rem] tracking-[10px] text-white uppercase drop-shadow-[0_0_25px_rgba(255,255,255,0.5)] animate-[pulse_1.5s_ease-in-out_infinite]">
-            WELCOME
-          </h1>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export default function Home() {
   const mainRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const speedLinesRef = useRef<HTMLDivElement>(null);
 
-  const [loadingPhase, setLoadingPhase] = useState<'loading' | 'done'>('loading');
-  const [startSlotMachine, setStartSlotMachine] = useState(false);
+  const [loadingPhase, setLoadingPhase] = useState<'loading' | 'done'>('done');
+  const [startSlotMachine, setStartSlotMachine] = useState(true);
   const [hoverIndex, setHoverIndex] = useState(-1);
   const [currentTeamIndices, setCurrentTeamIndices] = useState<number[]>(
     teams.map((_, i) => ENABLE_SLOT_MACHINE ? (i * 3 + 7) % teams.length : i)
   );
 
   const hasStartedSlotMachine = useRef(false);
-
-  // Prevent Hydration Mismatch & Handle Session
-  useEffect(() => {
-    if (sessionStorage.getItem('f1_hasLoadedBefore')) {
-      setLoadingPhase('done');
-      setStartSlotMachine(true);
-    }
-  }, []);
-
-  // Use memoized callbacks for LoadingScreen to prevent re-renders
-  const handleStartSlotMachine = useCallback(() => setStartSlotMachine(true), []);
-  const handleCompleteLoading = useCallback(() => setLoadingPhase('done'), []);
 
   // Smooth GSAP Entrance Animation - Scoped to mainRef
   useGSAP(() => {
@@ -192,6 +98,7 @@ export default function Home() {
     });
 
     return () => {
+      hasStartedSlotMachine.current = false;
       clearInterval(intervalId);
       timeouts.forEach(clearTimeout);
     };
@@ -326,12 +233,7 @@ export default function Home() {
           );
         })}
 
-        {loadingPhase !== 'done' && (
-          <LoadingScreen 
-            onStartSlotMachine={handleStartSlotMachine} 
-            onComplete={handleCompleteLoading} 
-          />
-        )}
+
       </div>
 
       {loadingPhase === 'done' && (

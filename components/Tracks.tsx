@@ -256,7 +256,7 @@ export default function Tracks() {
 
   return (
     <div id="tracks" ref={containerRef} className="page-content pt-[120px] px-6 md:px-[50px] pb-[50px] min-h-screen bg-transparent text-white">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes title-flicker {
           0%, 90% { 
             color: #e10600; 
@@ -294,7 +294,7 @@ export default function Tracks() {
           stroke-width: 3.5px !important;
           filter: drop-shadow(0 0 15px rgba(225, 6, 0, 0.9));
         }
-      `}</style>
+      `}} />
       <div className="max-w-[1400px] mx-auto">
         <div ref={headerRef} className="mb-10 relative flex flex-col">
           {/* Vùng chứa Title và Block Reveal */}

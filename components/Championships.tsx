@@ -13,9 +13,8 @@ interface Stats { worldChampion: string; constructorChampion: string; totalRaces
 interface Race { round: number; name: string; winner: string; }
 interface SeasonData { season: number; drivers: Driver[]; constructors: Constructor[]; stats: Stats; races: Race[]; }
 
-const StatCard = ({ title, value, icon }: { title: string, value: string, icon: string }) => (
+const StatCard = ({ title, value }: { title: string, value: string }) => (
   <div className="stat-card opacity-0 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-xl p-6 relative overflow-hidden group hover:border-[#e10600]/50 hover:bg-white/10 transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)] hover:-translate-y-1 hover:scale-[1.02] hover:shadow-[0_15px_30px_rgba(225,6,0,0.15)]">
-    <div className="absolute -right-4 -top-4 text-7xl opacity-5 group-hover:opacity-30 group-hover:scale-110 transition-all duration-300 grayscale group-hover:grayscale-0">{icon}</div>
     <div className="absolute top-0 left-0 w-1 h-full bg-[#e10600] scale-y-0 group-hover:scale-y-100 origin-bottom transition-transform duration-300 shadow-[0_0_10px_#e10600]"></div>
     <p className="text-white/50 font-orbitron text-xs md:text-sm uppercase tracking-widest mb-2 relative z-10 group-hover:text-white/80 transition-colors">{title}</p>
     <p className="text-white font-bold text-xl md:text-2xl font-inter relative z-10 group-hover:text-[#e10600] transition-colors">{value}</p>
@@ -253,10 +252,10 @@ export default function Championships() {
   
   return (
     <div id="championships" ref={mainContainerRef} className="page-content pt-[120px] px-6 md:px-[50px] pb-[80px] min-h-screen bg-transparent text-white overflow-x-hidden font-inter">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+      `}} />
       <div className="max-w-[1400px] mx-auto">
         
         {/* HEADER SECTION */}
@@ -296,10 +295,10 @@ export default function Championships() {
 
         {/* STATS SECTION */}
         <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          <StatCard title="World Champion" value={seasonData.stats.worldChampion} icon="🏆" />
-          <StatCard title="Constructor Champion" value={seasonData.stats.constructorChampion} icon="🏎️" />
-          <StatCard title="Most Wins" value={`${seasonData.stats.mostWinsDriver.name} (${seasonData.stats.mostWinsDriver.wins})`} icon="🥇" />
-          <StatCard title="Total Races" value={seasonData.stats.totalRaces.toString()} icon="🏁" />
+          <StatCard title="World Champion" value={seasonData.stats.worldChampion} />
+          <StatCard title="Constructor Champion" value={seasonData.stats.constructorChampion} />
+          <StatCard title="Most Wins" value={`${seasonData.stats.mostWinsDriver.name} (${seasonData.stats.mostWinsDriver.wins})`} />
+          <StatCard title="Total Races" value={seasonData.stats.totalRaces.toString()} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-16 mb-16">
